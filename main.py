@@ -1,21 +1,35 @@
 import os
-from flask import Flask, request
+from flask import Flask
+from rubka import Robot
 
 app = Flask(__name__)
 
-@app.route("/", methods=["GET"])
+TOKEN = os.environ.get("RUBIKA_TOKEN")
+
+if not TOKEN:
+    raise RuntimeError("RUBIKA_TOKEN is not set")
+
+bot = Robot(token=TOKEN)
+
+
+@app.route("/")
 def home():
     return "Rubika Bot is running!"
 
-@app.route("/webhook", methods=["POST"])
-def webhook():
-    data = request.get_json(silent=True)
 
-    print("Received from Rubika:")
-    print(data)
+@bot.on_message()
+def handle_message(bot, message):
+    text = getattr(message, "text", "") or ""
 
-    return "OK", 200
+    if text == "/start":
+        message.reply(
+            "سلام 👋\n"
+            "ربات روبیکا با موفقیت فعال شد."
+        )
+
+    elif text == "/test":
+        message.reply("✅ ربات فعال است.")
+
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", 10000))
-    app.run(host="0.0.0.0", port=port)
+    bot.run()
